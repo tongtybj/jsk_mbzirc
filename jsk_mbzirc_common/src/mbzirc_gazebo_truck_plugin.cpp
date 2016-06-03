@@ -181,6 +181,9 @@ void GazeboTruck::Update()
   rayShape->GetIntersection(distAbove, entityName);
   distAbove -= 0.00001;
 
+  if(distAbove < 10.0)
+    ROS_WARN("%s: dist above: %f", entityName.c_str(), distAbove);
+
   // broadcast the tf of heliport via
   tf::Transform transform;
   math::Pose heliport_pose = model_->GetLink("heliport")->GetWorldPose();

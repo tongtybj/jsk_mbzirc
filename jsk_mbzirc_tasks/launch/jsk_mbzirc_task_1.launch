@@ -45,8 +45,8 @@
 
     <node pkg="jsk_mbzirc_tasks" type="uav_teleop_keyboard" name="uav_teleop_keyboard"
           launch-prefix="xterm -e">
-  	<param name="teleopUGV" value="$(arg teleopUGV)"/>
-	<remap from="teleopUGV" to="uav_teleop_keyboard/teleopUGV"/>
+      <param name="teleopUGV" value="$(arg teleopUGV)"/>
+      <remap from="teleopUGV" to="uav_teleop_keyboard/teleopUGV"/>
     </node>
 
   </group>

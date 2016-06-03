@@ -1,0 +1,24 @@
+uav_motion_tracking:
+        x:
+                k_p: 0.2
+                k_i: 0.0
+                k_d: 0.0
+                limit_output: 9.0
+        y:
+                k_p: 0.2
+                k_i: 0.0
+                k_d: 0.0
+                limit_output: 9.0
+        z:
+                k_p: 0.2
+                k_i: 0.0
+                k_d: 0.0
+                limit_output: 9.0
+        yaw:
+                k_p: 2.0
+                k_i: 0.0
+                k_d: 0.0
+                limit_output: 1.0
+        center_cross_point_threshold: 2.0 # [m] 
+        takeoff_height: 1.0 # [m]     
+        heliport_height_offset: 0.5 # [m]
