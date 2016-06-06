@@ -23,6 +23,11 @@ MotionTracking::MotionTracking(ros::NodeHandle nh, ros::NodeHandle nhp):
   nhp_.param("state_topic_name", state_topic_name_, std::string("state"));
   nhp_.param("imu_topic_name", imu_topic_name_, std::string("imu"));
 
+  nhp_.param("landing_level_distance_threshold", landing_level_distance_threshold_, 0.6);
+  nhp_.param("landing_vertical_distance_threshold", landing_vertical_distance_threshold_, 0.2);
+  nhp_.param("landing_vertical_distance_threshold2", landing_vertical_distance_threshold2_, 0.05);
+  nhp_.param("landing_vertical_velocity", landing_vertical_velocity_, -0.5);
+
   /* cheating mode */
   nhp_.param("ground_truth_topic_name", ground_truth_topic_name_, std::string("ground_truth_to_tf/pose"));
 
@@ -50,6 +55,16 @@ MotionTracking::MotionTracking(ros::NodeHandle nh, ros::NodeHandle nhp):
   /* cheat mode */
   sub_ground_truth_ = nh_.subscribe<geometry_msgs::PoseStamped>(ground_truth_topic_name_, 1, boost::bind(&MotionTracking::groundTruthCallback, this, _1));
 
+  /* start arming(engaging) motor */
+  motor_engage_client_ = nh_.serviceClient<std_srvs::Empty>("engage");
+  motor_shutdown_client_ = nh_.serviceClient<std_srvs::Empty>("shutdown");
+
+  std_srvs::Empty srv;
+  while(1)
+    {
+      if(motor_engage_client_.call(srv)) break;
+    }
+
   state_updated_flag_ = false;
   imu_updated_flag_ = false;
 
@@ -58,7 +73,7 @@ MotionTracking::MotionTracking(ros::NodeHandle nh, ros::NodeHandle nhp):
   if(cheating_mode_)
     {
       nhp_.param("tf_loop_rate", tf_loop_rate_, 50.0);
-      
+
       ground_truth_updated_flag_ = false;
       tf_updated_flag_ = false;
 
@@ -196,7 +211,7 @@ void MotionTracking::trackingFunction()
                   double vel = linear_command_.length();
                   if(vel > velocity_limit_)
                     {
-                      ROS_WARN("[UAV motion tracking]: exceeds the vel limitation: %f", vel);
+                      //ROS_WARN("[UAV motion tracking]: exceeds the vel limitation: %f", vel);
                       linear_command_ *= (velocity_limit_ / vel) ;
                     }
                   geometry_msgs::TwistStamped twist_msg;
@@ -293,14 +308,42 @@ void MotionTracking::trackingFunction()
 
                   /* four pattern of truck movement => feed-forward */
                   linear_command_ += tf::Vector3(cos(truck_yaw) * truck_speed_, sin(truck_yaw) * truck_speed_, 0 );
-                  ROS_INFO("[UAV motion tracking]: feed-forwad: x: %f, y: %f", cos(truck_yaw) * truck_speed_, sin(truck_yaw) * truck_speed_);
+                  //ROS_INFO("[UAV motion tracking]: feed-forwad: x: %f, y: %f", cos(truck_yaw) * truck_speed_, sin(truck_yaw) * truck_speed_);
+                  //ROS_INFO("[UAV motion tracking]: com_vel_x: %f, com_vel_y: %f", linear_command_.x(), linear_command_.y());
 
                   /* limitation */
                   double vel = linear_command_.length();
                   if(vel > velocity_limit_) 
                     {
-                      ROS_WARN("[UAV motion tracking]: exceeds the vel limitation: %f", vel);
+                      //ROS_WARN("[UAV motion tracking]: exceeds the vel limitation: %f", vel);
                       linear_command_ *= (velocity_limit_ / vel) ;
+                    }
+
+
+                  /* final landing approach */
+                  tf::Vector3 landing_pos(heliport.getOrigin().x() - feedback_pos.x(), heliport.getOrigin().y() - feedback_pos.y(), 0);
+                  if(landing_pos.length() < landing_level_distance_threshold_)
+                    {/* first check the horizontal pos error */
+                      ROS_INFO("final landing approach, height offest is %f", feedback_pos.z()- heliport.getOrigin().z());
+                      if(feedback_pos.z()- heliport.getOrigin().z() < landing_vertical_distance_threshold_)
+                        {
+                          ROS_WARN("final approach, %f", feedback_pos.z()- heliport.getOrigin().z());
+#if 1
+                          /* TODO:use smart landing height control!!  */
+                          linear_command_.setZ(landing_vertical_velocity_);
+                          if(feedback_pos.z()- heliport.getOrigin().z() < landing_vertical_distance_threshold2_)
+                            {/* shutdown motors */
+                              ROS_WARN("shutdown motors");
+                              std_srvs::Empty srv;
+                              motor_shutdown_client_.call(srv); // no response
+                            }
+
+#else //just shutdown
+                          /* Temporarily: shutdown motor */
+                          std_srvs::Empty srv;
+                          motor_shutdown_client_.call(srv); // no response
+#endif
+                        }
                     }
 
                   geometry_msgs::TwistStamped twist_msg;

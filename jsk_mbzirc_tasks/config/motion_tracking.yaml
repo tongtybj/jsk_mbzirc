@@ -1,16 +1,16 @@
 uav_motion_tracking:
         x:
-                k_p: 0.2
+                k_p: 1.0
                 k_i: 0.0
                 k_d: 0.0
                 limit_output: 9.0
         y:
-                k_p: 0.2
+                k_p: 1.0
                 k_i: 0.0
                 k_d: 0.0
                 limit_output: 9.0
         z:
-                k_p: 0.2
+                k_p: 1.0
                 k_i: 0.0
                 k_d: 0.0
                 limit_output: 9.0
@@ -21,4 +21,10 @@ uav_motion_tracking:
                 limit_output: 1.0
         center_cross_point_threshold: 2.0 # [m] 
         takeoff_height: 1.0 # [m]     
-        heliport_height_offset: 0.5 # [m]
+        heliport_height_offset: 0.3 # [m]
+        landing_vertical_distance_threshold: 0.4 # [m]
+        landing_vertical_distance_threshold2: 0.25 # [m], this depends on the baselink height of UAV upon the leg lowest point of UAV
+        landing_level_distance_threshold: 0.6 # [m]
+controller:
+        twist:
+                auto_engage: false

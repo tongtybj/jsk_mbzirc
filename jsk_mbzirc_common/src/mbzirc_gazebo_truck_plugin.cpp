@@ -181,9 +181,6 @@ void GazeboTruck::Update()
   rayShape->GetIntersection(distAbove, entityName);
   distAbove -= 0.00001;
 
-  if(distAbove < 10.0)
-    ROS_WARN("%s: dist above: %f", entityName.c_str(), distAbove);
-
   // broadcast the tf of heliport via
   tf::Transform transform;
   math::Pose heliport_pose = model_->GetLink("heliport")->GetWorldPose();
@@ -197,11 +194,11 @@ void GazeboTruck::Update()
   ss << 20*60 - current_time.Double();
   msg_time.data = "remain time:" + ss.str();
   pub_time_.publish(msg_time);
-  if ( entityName != "" && distAbove < 1.0 )
+  if ( entityName != "" && distAbove < 0.1 )
     {
       std_msgs::String msg_score, msg_time;
       msg_score.data = "Mission Completed";
-      ROS_INFO_STREAM("Remaining time is " << msg_time.data << "[sec], Score is " << msg_score.data);
+      ROS_INFO_STREAM("Remaining time is " << ss.str() << "[sec], Score is " << msg_score.data);
       pub_score_.publish(msg_score);
       terminated_ = true;
     }

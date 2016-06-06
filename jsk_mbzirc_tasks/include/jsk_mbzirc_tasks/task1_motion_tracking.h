@@ -37,6 +37,7 @@
 #include <geometry_msgs/PoseStamped.h> /* for gps based position and ground truth */
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
+#include <std_srvs/Empty.h>
 
 #include <hector_quadrotor_controller/pid.h> /* for tracking pid control */
 
@@ -73,6 +74,7 @@ namespace uav
     ros::Subscriber sub_estimated_state_, sub_imu_;
     tf::TransformListener tf_; // this is for the cheat mode
     ros::Subscriber sub_ground_truth_; // this is for the cheat mode
+    ros::ServiceClient motor_engage_client_, motor_shutdown_client_;
 
     boost::thread tracking_thread_; //control thread
     boost::thread tf_thread_; //control thread
@@ -95,9 +97,10 @@ namespace uav
     bool state_updated_flag_, imu_updated_flag_;
     bool ground_truth_updated_flag_, tf_updated_flag_;
 
+    double landing_level_distance_threshold_, landing_vertical_distance_threshold_, landing_vertical_distance_threshold2_, landing_vertical_velocity_;
+
     std::string twist_cmd_topic_name_, state_topic_name_, imu_topic_name_;
     std::string ground_truth_topic_name_;
-
 
     tf::Vector3 center_cross_point_;
 
