@@ -35,6 +35,7 @@
 
 #include <tf/transform_listener.h> /* for cheating mode */
 #include <geometry_msgs/PoseStamped.h> /* for gps based position and ground truth */
+#include <geometry_msgs/PointStamped.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 #include <std_srvs/Empty.h>
@@ -71,18 +72,18 @@ namespace uav
   private:
     ros::NodeHandle nh_, nhp_;
     ros::Publisher pub_twist_cmd_; //first we use twist mode, later we should change to attitude mode
-    ros::Subscriber sub_estimated_state_, sub_imu_;
+    ros::Subscriber sub_estimated_state_, sub_imu_, sub_heliport_pos_;
     tf::TransformListener tf_; // this is for the cheat mode
     ros::Subscriber sub_ground_truth_; // this is for the cheat mode
     ros::ServiceClient motor_engage_client_, motor_shutdown_client_;
 
     boost::thread tracking_thread_; //control thread
     boost::thread tf_thread_; //control thread
-    boost::mutex tf_mutex_;
+    boost::mutex heliport_mutex_;
 
     int tracking_mode_;
     int control_mode_; //twist mode or attitude mode
-    bool cheating_mode_; //use ground truth to go to the cross point and use ground truth to catch truck
+    bool cheating_mode_uav_, cheating_mode_heliport_; //use ground truth to go to the cross point and use ground truth to catch truck
     double level_p_gain_, level_i_gain_, level_d_gain_;
     double vetical_p_gain_, vetical_i_gain_, vetical_d_gain_;
     double center_cross_point_threshold_;
@@ -95,11 +96,11 @@ namespace uav
     double waiting_height_, takeoff_height_, heliport_height_offset_;
 
     bool state_updated_flag_, imu_updated_flag_;
-    bool ground_truth_updated_flag_, tf_updated_flag_;
+    bool ground_truth_updated_flag_, tf_updated_flag_, heliport_pos_updated_flag_;
 
     double landing_level_distance_threshold_, landing_vertical_distance_threshold_, landing_vertical_distance_threshold2_, landing_vertical_velocity_;
 
-    std::string twist_cmd_topic_name_, state_topic_name_, imu_topic_name_;
+    std::string twist_cmd_topic_name_, state_topic_name_, imu_topic_name_, heliport_pos_topic_name_;
     std::string ground_truth_topic_name_;
 
     tf::Vector3 center_cross_point_;
@@ -123,12 +124,13 @@ namespace uav
     void trackingFunction();
     void tfFunction();
     void stateCallback(const nav_msgs::OdometryConstPtr &state);
+    void heliportCallback(const geometry_msgs::PointStampedConstPtr &state);
     void imuCallback(const sensor_msgs::ImuConstPtr &imu);
     void groundTruthCallback(const geometry_msgs::PoseStampedConstPtr &ground_truth);
 
-    void setGroundTruthHeliportPose(tf::StampedTransform transform);
-    tf::Quaternion getGroundTruthHeliportOrientation();
-    tf::Vector3 getGroundTruthHeliportOrigin();
+    void setHeliportPose(tf::StampedTransform transform);
+    tf::Quaternion getHeliportOrientation();
+    tf::Vector3 getHeliportOrigin();
 
   };
 

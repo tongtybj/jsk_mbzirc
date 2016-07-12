@@ -1,6 +1,12 @@
 <launch>
 
+  <arg name="cheating_mode_uav" default="true" />
+  <arg name="cheating_mode_heliport" default="true" />
+
   <rosparam file="$(find jsk_mbzirc_tasks)/config/motion_tracking.yaml" command="load" />
-  <node pkg="jsk_mbzirc_tasks" type="task1_motion_tracking_node" name="uav_motion_tracking" output="screen"/>
+  <node pkg="jsk_mbzirc_tasks" type="task1_motion_tracking_node" name="uav_motion_tracking" output="screen" >
+    <param name="cheating_mode_uav" value="$(arg cheating_mode_uav)" />
+    <param name="cheating_mode_heliport" value="$(arg cheating_mode_heliport)" />
+  </node>
 
 </launch>
