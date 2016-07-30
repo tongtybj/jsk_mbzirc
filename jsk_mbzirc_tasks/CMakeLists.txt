@@ -22,12 +22,12 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${GAZEBO
 add_executable(uav_teleop_keyboard src/uav_teleop_keyboard.cpp)
 target_link_libraries(uav_teleop_keyboard ${catkin_LIBRARIES})
 
-
 add_library (task1_motion_tracking src/task1_motion_tracking.cpp)
 target_link_libraries (task1_motion_tracking ${catkin_LIBRARIES}  ${Boost_LIBRARIES}) 
 
 add_executable(task1_motion_tracking_node src/task1_motion_tracking_node.cpp)
 target_link_libraries(task1_motion_tracking_node task1_motion_tracking ${catkin_LIBRARIES} )
+
 # build plugins
 add_library(mbzirc_gazebo_gimbal_plugin src/mbzirc_gazebo_gimbal_plugin.cpp)
 target_link_libraries(mbzirc_gazebo_gimbal_plugin ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
