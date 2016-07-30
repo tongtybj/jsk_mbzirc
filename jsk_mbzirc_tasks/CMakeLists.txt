@@ -4,8 +4,10 @@ project(jsk_mbzirc_tasks)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp hector_quadrotor_controller tf)
+find_package(catkin REQUIRED COMPONENTS roscpp hector_quadrotor_controller tf gazebo_ros)
 
+# Depend on system install of Gazebo and SDFormat
+find_package(gazebo REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -15,7 +17,7 @@ catkin_package(
   CATKIN_DEPENDS
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${GAZEBO_INCLUDE_DIRS})
 
 add_executable(uav_teleop_keyboard src/uav_teleop_keyboard.cpp)
 target_link_libraries(uav_teleop_keyboard ${catkin_LIBRARIES})
@@ -26,10 +28,19 @@ target_link_libraries (task1_motion_tracking ${catkin_LIBRARIES}  ${Boost_LIBRAR
 
 add_executable(task1_motion_tracking_node src/task1_motion_tracking_node.cpp)
 target_link_libraries(task1_motion_tracking_node task1_motion_tracking ${catkin_LIBRARIES} )
+# build plugins
+add_library(mbzirc_gazebo_gimbal_plugin src/mbzirc_gazebo_gimbal_plugin.cpp)
+target_link_libraries(mbzirc_gazebo_gimbal_plugin ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
 #############
+install(TARGETS
+  mbzirc_gazebo_gimbal_plugin
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  )
+
 install(DIRECTORY launch urdf config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS)

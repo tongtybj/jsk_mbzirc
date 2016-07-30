@@ -86,8 +86,8 @@ void GazeboTruck::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
   }
 
   node_handle_ = new ros::NodeHandle(namespace_);
-  pub_score_ = node_handle_->advertise<std_msgs::String>("score", 1, true);  // set latch true
-  pub_time_ = node_handle_->advertise<std_msgs::String>("remaining_time", 1);
+  pub_score_ = node_handle_->advertise<std_msgs::String>("/score", 1, true);  // set latch true
+  pub_time_ = node_handle_->advertise<std_msgs::String>("/remaining_time", 1);
 
   update_connection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboTruck::Update, this));
 }
@@ -161,7 +161,7 @@ void GazeboTruck::Update()
       y = -CIRCLE_RADIUS * sin(l/l2*(2*M_PI-theta*2)+theta);
       yaw = -(l/l2*(2*M_PI-theta*2)+theta)-M_PI/2;
     }
-  model_->SetLinkWorldPose(math::Pose(x, y, 0.595, 0, 0, yaw), link_);
+  model_->SetLinkWorldPose(math::Pose(x, y, 0, 0, 0, yaw), link_);
   last_time_ = world_->GetSimTime();
 
   // check score
@@ -172,8 +172,12 @@ void GazeboTruck::Update()
 
   double distAbove;
   std::string entityName;
-  math::Box box = model_->GetLink("heliport")->GetCollisionBoundingBox();
-  math::Vector3 start = model_->GetLink("heliport")->GetWorldPose().pos;
+  math::Box box = model_->GetLink("base_link")->GetCollision("base_link_collision_heliport")->GetBoundingBox();
+  math::Vector3 start = model_->GetWorldPose().pos;
+
+  start.x += (-0.5) * cos(yaw);
+  start.y += (-0.5) * sin(yaw);
+
   math::Vector3 end = start;
   start.z = box.max.z + 0.00001;
   end.z += 1000;
@@ -181,20 +185,13 @@ void GazeboTruck::Update()
   rayShape->GetIntersection(distAbove, entityName);
   distAbove -= 0.00001;
 
-  // broadcast the tf of heliport via
-  tf::Transform transform;
-  math::Pose heliport_pose = model_->GetLink("heliport")->GetWorldPose();
-  transform.setOrigin(tf::Vector3(heliport_pose.pos.x, heliport_pose.pos.y, heliport_pose.pos.z));
-  transform.setRotation(tf::Quaternion(heliport_pose.rot.x, heliport_pose.rot.y, heliport_pose.rot.z, heliport_pose.rot.w));
-  br_.sendTransform(tf::StampedTransform(transform,ros::Time(world_->GetSimTime().Double()), "/world", "heliport"));
-
   // publish remain time
   std::stringstream ss;
   std_msgs::String msg_time;
   ss << 20*60 - current_time.Double();
   msg_time.data = "remain time:" + ss.str();
   pub_time_.publish(msg_time);
-  if ( entityName != "" && distAbove < 0.1 )
+  if ( entityName != "" && distAbove < 0.2 )
     {
       std_msgs::String msg_score, msg_time;
       msg_score.data = "Mission Completed";
