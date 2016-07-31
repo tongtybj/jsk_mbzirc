@@ -167,6 +167,12 @@ namespace uav
       heliport_state_.setRotation(q);
     }
 
+    void setHeliportPosition(tf::Vector3 origin)
+    {
+      boost::mutex::scoped_lock lock(heliport_mutex_);
+      heliport_state_.setOrigin(origin);
+    }
+     
     void setHeliportOrientation(tf::Quaternion q)
     {
       boost::mutex::scoped_lock lock(heliport_mutex_);

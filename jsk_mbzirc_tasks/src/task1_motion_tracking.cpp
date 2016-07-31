@@ -103,8 +103,8 @@ namespace uav
   {
     heliport_pos_updated_flag_ = true;
     tf::Vector3 heliport_pos(state->point.x, state->point.y, heliport_height_); // z = 1.1, hardcoding
-    tf::Quaternion heliport_orientation;
-    setHeliportPose(heliport_pos, heliport_orientation);
+    setHeliportPosition(heliport_pos);
+    ROS_INFO("heliport x:%f, y:%f", state->point.x, state->point.y);
   }
 
   void MotionTracking::uavImuCallback(const sensor_msgs::ImuConstPtr &imu)
