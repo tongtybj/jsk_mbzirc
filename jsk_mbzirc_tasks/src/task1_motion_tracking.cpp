@@ -64,8 +64,8 @@ namespace uav
     else
       sub_uav_state_ = nh_.subscribe<nav_msgs::Odometry>(uav_state_topic_name_, 1, boost::bind(&MotionTracking::uavStateCallback, this, _1));
 
-    if(cheating_mode_heliport_)
-      sub_truck_ground_truth_ = nh_.subscribe<nav_msgs::Odometry>(truck_ground_truth_topic_name_, 1, boost::bind(&MotionTracking::truckGroundTruthCallback, this, _1)); //for truck groundtruth
+    //if(cheating_mode_heliport_) // this will be shifted to the callback function
+    sub_truck_ground_truth_ = nh_.subscribe<nav_msgs::Odometry>(truck_ground_truth_topic_name_, 1, boost::bind(&MotionTracking::truckGroundTruthCallback, this, _1)); //for truck groundtruth
 
     /* start arming(engaging) motor */
     motor_engage_client_ = nh_.serviceClient<std_srvs::Empty>("engage");
@@ -127,9 +127,15 @@ namespace uav
     tfScalar roll = 0, pitch = 0, yaw = 0;
     rotation.getRPY(roll, pitch, yaw);
     tf::Vector3 origin(ground_truth->pose.pose.position.x + (-0.5) * cos(yaw), ground_truth->pose.pose.position.y  + (-0.5) * sin(yaw), heliport_height_);
-    setHeliportPose(origin, q);
 
-    heliport_pos_updated_flag_ = true;
+    /* in cheat mode we use both position and yaw data */
+    if(cheating_mode_heliport_)
+      {
+        setHeliportPose(origin, q);
+        heliport_pos_updated_flag_ = true;
+      }
+    else /*TODO:temporarily we use yaw data form ground truth */
+      setHeliportOrientation(q);
   }
 
   void MotionTracking::trackingFunction()
@@ -254,7 +260,11 @@ namespace uav
                     anguler_command_.setZ(pid_.yaw.update(att_command_.z(), feedback_att.z(), period));
 
                     /* four pattern of truck movement => feed-forward */
+#if 0
                     if(cheating_mode_heliport_)
+#else
+                    if(1)
+#endif
                       {
                         tf::Matrix3x3 heliport_rotation(getHeliportOrientation());
                         heliport_rotation.getRPY(roll, pitch, yaw);
